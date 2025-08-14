@@ -16,7 +16,7 @@ const router = Router();
  */
 router.post('/register', registerValidation, validate, authController.register);
 
-router.post('/callback', authController.callback);
+router.get('/callback', authController.callback);
 
 /**
  * @route POST /api/auth/login
