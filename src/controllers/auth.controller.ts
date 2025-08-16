@@ -6,7 +6,7 @@ import { generateToken } from '../utils/token.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 import { logger } from '../config/logger.js';
 import prisma from '../config/database.js';
-
+import verifyAppleToken from "verify-apple-id-token";
 /**
  * Register a new user
  */
@@ -168,8 +168,23 @@ export const getProfile = async (
 
 export const callback = async (req: Request, res: Response): Promise<void> => {
   try {
-    logger.info(req.body, 'reqody');
-    sendSuccess(res, 'Callback successful', req.body, 200);
+    const { id_token } = req.body;
+    const jwtClaims = await verifyAppleToken({
+      idToken: id_token,
+      clientId: process.env.APPLE_CLIENT_ID || '',
+    });
+
+    if (!jwtClaims) {
+      sendError(
+        res,
+        'Callback failed',
+        [{ field: 'server', message: 'An error occurred during callback' }],
+        401
+      );
+      return;
+    }
+
+    sendSuccess(res, 'Callback successful', jwtClaims, 200);
   } catch (error) {
     logger.error('Callback error:', error);
     sendError(
